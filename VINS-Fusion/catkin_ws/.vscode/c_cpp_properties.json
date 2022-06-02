@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [  
+                "/usr/include/eigen3",
+                "/home/zby/work/software/opencv-4.5/install/usr/local/include/opencv4",
+                "/opt/ros/noetic/include",
+                "src/VINS-Mono/camera_model/include/"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
