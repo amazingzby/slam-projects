@@ -1,0 +1,7 @@
+build/
+bin/libcamera_model.so
+bin/libMyVio.so  
+bin/pose_output.txt  
+bin/run_euroc  
+bin/testCurveFitting
+

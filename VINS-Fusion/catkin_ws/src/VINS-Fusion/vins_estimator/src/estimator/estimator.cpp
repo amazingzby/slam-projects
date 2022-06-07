@@ -26,6 +26,7 @@ Estimator::~Estimator()
     }
 }
 
+//所有的状态清空
 void Estimator::clearState()
 {
     mProcess.lock();
@@ -105,7 +106,7 @@ void Estimator::setParameter()
     ProjectionTwoFrameOneCamFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
     ProjectionTwoFrameTwoCamFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
     ProjectionOneFrameTwoCamFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
-    td = TD;
+    td = TD;//时间的误差量
     g = G;
     cout << "set g " << g.transpose() << endl;
     featureTracker.readIntrinsicParameter(CAM_NAMES);
@@ -347,7 +348,7 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
     printf("init first imu pose\n");
     initFirstPoseFlag = true;
     //return;
-    Eigen::Vector3d averAcc(0, 0, 0);
+    Eigen::Vector3d averAcc(0, 0, 0);//平均加速度
     int n = (int)accVector.size();
     for(size_t i = 0; i < accVector.size(); i++)
     {
@@ -1568,6 +1569,10 @@ void Estimator::outliersRejection(set<int> &removeIndex)
     }
 }
 
+// 使用上一时刻的姿态进行快速的imu预积分
+// 用来预测最新P,V,Q的姿态
+// -latest_p,latest_q,latest_v,latest_acc_0,latest_gyr_0 最新时刻的姿态。
+// 这个的作用是为了刷新姿态的输出，但是这个值的误差相对会比较大，是未经过非线性优化获取的初始值。
 void Estimator::fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity)
 {
     double dt = t - latest_time;

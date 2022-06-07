@@ -189,6 +189,7 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     */
 }
 
+//在vio_callback回调函数中接收并处理vio的定位数据，并且生成了三个发布器，用于将结果展示在rviz上
 void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");

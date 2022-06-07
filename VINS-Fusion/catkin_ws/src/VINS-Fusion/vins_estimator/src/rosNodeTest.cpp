@@ -21,15 +21,15 @@
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
 
-Estimator estimator;
+Estimator estimator;  //申请一个estimator，也就是VIO
 
 queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
-std::mutex m_buf;
+std::mutex m_buf;//互斥锁
 
-
+//获得左目的buffer message
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
     m_buf.lock();
@@ -37,6 +37,7 @@ void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
     m_buf.unlock();
 }
 
+//获得右目的buffer message
 void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
     m_buf.lock();
@@ -44,7 +45,7 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
     m_buf.unlock();
 }
 
-
+// 从msg中获取图片，返回值cv::Mat，输入是当前图像msg的指针
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
     cv_bridge::CvImageConstPtr ptr;
@@ -67,6 +68,8 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
     return img;
 }
 
+// 从两个主题中提取具有相同时间戳的图像
+// 并将图像输入到估计器中
 // extract images with same timestamp from two topics
 void sync_process()
 {
@@ -131,7 +134,7 @@ void sync_process()
     }
 }
 
-
+// 输入imu的msg信息，进行解算并把imu数据输入到estimator
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 {
     double t = imu_msg->header.stamp.toSec();
@@ -147,7 +150,7 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
     return;
 }
 
-
+// 把特征点的点云msg输入到estimator
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 {
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
@@ -180,6 +183,7 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
     return;
 }
 
+// 是否重启estimator，并重新设置参数
 void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
 {
     if (restart_msg->data == true)
@@ -191,6 +195,7 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
     return;
 }
 
+// 是否使用IMU
 void imu_switch_callback(const std_msgs::BoolConstPtr &switch_msg)
 {
     if (switch_msg->data == true)
@@ -206,6 +211,7 @@ void imu_switch_callback(const std_msgs::BoolConstPtr &switch_msg)
     return;
 }
 
+// 相机的开关，双目or单目
 void cam_switch_callback(const std_msgs::BoolConstPtr &switch_msg)
 {
     if (switch_msg->data == true)
@@ -238,8 +244,10 @@ int main(int argc, char **argv)
     string config_file = argv[1];
     printf("config_file: %s\n", argv[1]);
 
-    readParameters(config_file);
-    estimator.setParameter();
+    readParameters(config_file);//读取参数
+    estimator.setParameter();//设置参数
+    // 当setParameter()时候，就开启了一个Estimator类内的新线程：processMeasurements();
+    // processMeasurements();处理各种buffer里面的东西
 
 #ifdef EIGEN_DONT_PARALLELIZE
     ROS_DEBUG("EIGEN_DONT_PARALLELIZE");

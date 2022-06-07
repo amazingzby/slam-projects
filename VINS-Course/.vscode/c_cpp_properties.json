@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [  
+                "/usr/include/eigen3",
+                "/home/zby/work/software/opencv-3.4.5/install/include",
+                "/home/zby/work/software/opencv-3.4.5/install/include/opencv",
+                "include",
+                "./"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
