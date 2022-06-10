@@ -413,18 +413,26 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 {
     ROS_DEBUG("new image coming ------------------------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
+    /* addFeatureCheckParallax
+    对当前帧与之前帧进行视差比较，如果是当前帧变化很小，就会删去倒数第二帧，如果变化很大，就删去最旧的帧。并把这一帧作为新的关键帧
+    这样也就保证了划窗内优化的,除了最后一帧可能不是关键帧外,其余的都是关键帧
+    VINS里为了控制优化计算量，在实时情况下，只对当前帧之前某一部分帧进行优化，而不是全部历史帧。局部优化帧的数量就是窗口大小。
+    为了维持窗口大小，需要去除旧的帧添加新的帧，也就是边缘化 Marginalization。到底是删去最旧的帧（MARGIN_OLD）还是删去刚
+    刚进来窗口倒数第二帧(MARGIN_SECOND_NEW)
+    如果大于最小像素,则返回true */
+    //判断之后，确定要marg掉哪个帧
     if (f_manager.addFeatureCheckParallax(frame_count, image, td))
     {
-        marginalization_flag = MARGIN_OLD;
+        marginalization_flag = MARGIN_OLD;//MARGIN_OLD = 0,关键帧
         //printf("keyframe\n");
     }
     else
     {
-        marginalization_flag = MARGIN_SECOND_NEW;
+        marginalization_flag = MARGIN_SECOND_NEW;//MARGIN_SECOND_NEW = 1，非关键帧
         //printf("non-keyframe\n");
     }
 
-    ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
+    ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");//当前帧是非关键帧or关键帧
     ROS_DEBUG("Solving %d", frame_count);
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
@@ -434,13 +442,19 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     all_image_frame.insert(make_pair(header, imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
 
+    // 估计一个外部参,并把ESTIMATE_EXTRINSIC置1,输出ric和RIC
     if(ESTIMATE_EXTRINSIC == 2)
     {
         ROS_INFO("calibrating extrinsic param, rotation movement is needed");
         if (frame_count != 0)
         {
+            // 这个里边放的是新图像和上一帧
             vector<pair<Vector3d, Vector3d>> corres = f_manager.getCorresponding(frame_count - 1, frame_count);
             Matrix3d calib_ric;
+            /* CalibrationExRotation
+            当外参完全不知道的时候，可以在线对其进行初步估计,然后在后续优化时，会在optimize函数中再次优化。
+            输入是新图像和上一阵图像的位姿 和二者之间的imu预积分值,输出旋转矩阵
+            对应VIO课程第七讲中对外参矩阵的求解 */
             if (initial_ex_rotation.CalibrationExRotation(corres, pre_integrations[frame_count]->delta_q, calib_ric))
             {
                 ROS_WARN("initial extrinsic rotation calib success");
@@ -452,6 +466,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         }
     }
 
+    //如果没有初始化，则先初始化
     if (solver_flag == INITIAL)
     {
         // monocular + IMU initilization
@@ -1002,24 +1017,40 @@ bool Estimator::failureDetection()
     return false;
 }
 
+// 基于滑动窗口的紧耦合的非线性优化，残差项的构造和求解
 void Estimator::optimization()
 {
     TicToc t_whole, t_prepare;
+    // vector转换成double数组，因为ceres使用数值数组
+    /*可以看出来，这里面生成的优化变量由：
+    para_Pose（7维，相机位姿）、
+    para_SpeedBias（9维，相机速度、加速度偏置、角速度偏置）、
+    para_Ex_Pose（6维、相机IMU外参）、
+    para_Feature（1维，特征点深度）、
+    para_Td（1维，标定同步时间）
+    五部分组成，在后面进行边缘化操作时这些优化变量都是当做整体看待。*/
     vector2double();
 
-    ceres::Problem problem;
-    ceres::LossFunction *loss_function;
+    ceres::Problem problem;//定义问题，定义ceres的优化问题
+    ceres::LossFunction *loss_function;//核函数
     //loss_function = NULL;
-    loss_function = new ceres::HuberLoss(1.0);
+    loss_function = new ceres::HuberLoss(1.0);//HuberLoss
     //loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
     //ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
     for (int i = 0; i < frame_count + 1; i++)
     {
+        // 对于四元数或者旋转矩阵这种使用过参数化表示旋转的方式，它们是不支持广义的加法
+        // 所以我们在使用ceres对其进行迭代更新的时候就需要自定义其更新方式了，具体的做法是实现一个LocalParameterization
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
-        problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);
+        //用户在调用AddResidualBlock( )时其实已经隐式地向Problem传递了参数模块，但在一些情况下，
+        //需要用户显示地向Problem传入参数模块（通常出现在需要对优化参数进行重新参数化的情况）。
+        //Ceres提供了Problem::AddParameterBlock( )函数用于用户显式传递参数模块
+        //
+        problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);//因为有四元数,所以使用了 local_parameterization
         if(USE_IMU)
-            problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);
+            problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);////使用默认的加法
     }
+    // 没使用imu时,将窗口内第一帧的位姿固定
     if(!USE_IMU)
         problem.SetParameterBlockConstant(para_Pose[0]);
 
@@ -1038,14 +1069,17 @@ void Estimator::optimization()
             problem.SetParameterBlockConstant(para_Ex_Pose[i]);
         }
     }
-    problem.AddParameterBlock(para_Td[0], 1);
+    problem.AddParameterBlock(para_Td[0], 1);////把时间也作为待优化变量
 
-    if (!ESTIMATE_TD || Vs[0].norm() < 0.2)
+    if (!ESTIMATE_TD || Vs[0].norm() < 0.2)//如果不估计时间就固定
         problem.SetParameterBlockConstant(para_Td[0]);
 
+    // ------------------------在问题中添加约束,也就是构造残差函数---------------------------------- 
+    // 在问题中添加先验信息作为约束
     if (last_marginalization_info && last_marginalization_info->valid)
     {
         // construct new marginlization_factor
+        // 构造新的marginisation_factor construct new marginlization_factor
         MarginalizationFactor *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
         problem.AddResidualBlock(marginalization_factor, NULL,
                                  last_marginalization_parameter_blocks);
