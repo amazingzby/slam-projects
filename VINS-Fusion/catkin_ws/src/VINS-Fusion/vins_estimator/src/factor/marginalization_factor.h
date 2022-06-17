@@ -47,8 +47,7 @@ struct ResidualBlockInfo
     std::vector<int> drop_set;
 
     double **raw_jacobians;
-    //残差，IMU:15×1,视觉:2×1 VectorXd residuals;
-    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> jacobians;
+    std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> jacobians;//残差，IMU:15×1,视觉:2×1 VectorXd residuals;
     Eigen::VectorXd residuals;
 
     int localSize(int size)

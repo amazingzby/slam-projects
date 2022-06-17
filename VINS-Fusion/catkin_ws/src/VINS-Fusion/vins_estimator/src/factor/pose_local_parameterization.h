@@ -13,10 +13,12 @@
 #include <ceres/ceres.h>
 #include "../utility/utility.h"
 
+// 对于四元数或者旋转矩阵这种使用过参数化表示旋转的方式，它们是不支持广义的加法
+// 所以我们在使用ceres对其进行迭代更新的时候就需要自定义其更新方式了，具体的做法是实现一个LocalParameterization
 class PoseLocalParameterization : public ceres::LocalParameterization
 {
-    virtual bool Plus(const double *x, const double *delta, double *x_plus_delta) const;
-    virtual bool ComputeJacobian(const double *x, double *jacobian) const;
+    virtual bool Plus(const double *x, const double *delta, double *x_plus_delta) const;//定义四元数的加法
+    virtual bool ComputeJacobian(const double *x, double *jacobian) const;//计算新的Jacobian矩阵
     virtual int GlobalSize() const { return 7; };
     virtual int LocalSize() const { return 6; };
 };
