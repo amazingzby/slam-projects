@@ -313,6 +313,8 @@ void Problem::MakeHessian() {
             ulong index_i = v_i->OrderingId();
             ulong dim_i = v_i->LocalDimension();
 
+            //Information 信息矩阵，输出显示为2*2的单位矩阵
+            //std::cout<<edge.second->Information() <<std::endl;
             MatXX JtW = jacobian_i.transpose() * edge.second->Information();
             for (size_t j = i; j < verticies.size(); ++j) {
                 auto v_j = verticies[j];

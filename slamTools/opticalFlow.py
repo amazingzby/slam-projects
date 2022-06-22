@@ -87,17 +87,18 @@ def opt_flow(imgPath1,imgPath2,fish_eye=False):
     gray2 = cv2.cvtColor(gray2,cv2.COLOR_GRAY2BGR)
     dmatchs = []
     draw_line = True
+    h, w, _ = gray1.shape
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         a, b = new.ravel()
         a, b = int(a), int(b)
         c, d = old.ravel()
         c, d = int(c), int(d)
         # mask = cv.line(mask, (a, b), (c, d),(0,255,100), 2)
-        gray1 = cv2.circle(gray1, (c, d), 5, (0, 100, 255), -1)
-        gray2 = cv2.circle(gray2, (a, b), 5, (0, 100, 255), -1)
+        point_size = max(2,w//200)
+        gray1 = cv2.circle(gray1, (c, d), point_size, (0, 100, 255), -1)
+        gray2 = cv2.circle(gray2, (a, b), point_size, (0, 100, 255), -1)
     img = cv2.hconcat([gray1,gray2])
     imgMatch = img.copy()
-    h,w,_ = gray1.shape
     for i, (new, old) in enumerate(zip(good_new, good_old)):
         a, b = new.ravel()
         a, b = int(a), int(b)
@@ -131,6 +132,21 @@ def show_simcom():
     simcom_path = "/home/zby/data/simcom/20220225_143810/mav0"
     pair_files = parse_simcom_files(simcom_path)
     for idx in range(len(pair_files)):
+        img,imgMatch = opt_flow(pair_files[idx][0],pair_files[idx][1],fish_eye=True)
+        h,w,_ = img.shape
+        #img = cv2.resize(img,(w//2,h//2))
+        #imgMatch = cv2.resize(imgMatch, (w // 2, h // 2))
+        img_a = cv2.vconcat([img,imgMatch])
+        cv2.imshow("img",img_a)
+        cv2.waitKey()
+        #cv2.imshow("img",imgMatch)
+        #cv2.waitKey()
+        cv2.destroyAllWindows()
+
+def show_euROC():
+    simcom_path = "/home/zby/data/EuRoC/MH_01/mav0"
+    pair_files = parse_simcom_files(simcom_path)
+    for idx in range(len(pair_files)):
         img,imgMatch = opt_flow(pair_files[idx][0],pair_files[idx][1],fish_eye=False)
         h,w,_ = img.shape
         #img = cv2.resize(img,(w//2,h//2))
@@ -143,5 +159,5 @@ def show_simcom():
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    #show_oak()
-    show_simcom()
+    show_oak()
+    #show_simcom()

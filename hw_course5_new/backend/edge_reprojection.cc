@@ -16,7 +16,7 @@ namespace backend {
     MatXX information_;             // 信息矩阵
     VecX observation_;              // 观测信息
     */
-
+//重投影误差，两维值
 void EdgeReprojection::ComputeResidual() {
     double inv_dep_i = verticies_[0]->Parameters()[0];//坐标点vertex，获取逆深度信息
 
@@ -41,6 +41,7 @@ void EdgeReprojection::ComputeResidual() {
     double dep_j = pts_camera_j.z();
     //head<n>()函数：对变量Eigen::Vector4f x进行x.head<n>()操作表示提取前n个元素。
     //前部分为通过i推测的j，后部分为第j个Frame的坐标，除以深度暂时看不懂
+    //最终求残差是像素坐标系，pts_camera_j / dep_j从相机坐标系到像素坐标系
     residual_ = (pts_camera_j / dep_j).head<2>() - pts_j_.head<2>();   /// J^t * J * delta_x = - J^t * r
 //    residual_ = information_ * residual_;   // remove information here, we multi information matrix in problem solver
 }
@@ -73,7 +74,7 @@ void EdgeReprojection::ComputeJacobians() {
     Mat33 Rj = Qj.toRotationMatrix();
     Mat33 ric = qic.toRotationMatrix();
     Mat23 reduce(2, 3);
-    //查看视觉SLAM14讲第二版186页底部类似公式，关于投影点的导数
+    //查看视觉SLAM14讲第二版187页底部公式7.48类似公式，关于投影点的导数
     reduce << 1. / dep_j, 0, -pts_camera_j(0) / (dep_j * dep_j),
         0, 1. / dep_j, -pts_camera_j(1) / (dep_j * dep_j);
 //    reduce = information_ * reduce;
@@ -93,7 +94,7 @@ void EdgeReprojection::ComputeJacobians() {
     jaco_j.rightCols<3>() = ric.transpose() * Sophus::SO3d::hat(pts_imu_j);
     jacobian_pose_j.leftCols<6>() = reduce * jaco_j;
 
-    Eigen::Vector2d jacobian_feature;
+    Eigen::Vector2d jacobian_feature;//只有一个逆深度变量，因此为2*1
     jacobian_feature = reduce * ric.transpose() * Rj.transpose() * Ri * ric * pts_i_ * -1.0 / (inv_dep_i * inv_dep_i);
 
     jacobians_[0] = jacobian_feature;
