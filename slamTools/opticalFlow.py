@@ -114,7 +114,7 @@ def opt_flow(imgPath1,imgPath2,fish_eye=False):
     return img,imgMatch
 
 def show_oak():
-    oak_d_path = "/home/zby/data/oak-d/stereo_image/data/2022-05-25"
+    oak_d_path = "/home/zby/data/oak-d/stereo_image/data/2022-06-24                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     "
     pair_files = parse_oakd_files(oak_d_path)
     for idx in range(len(pair_files)):
         img,imgMatch = opt_flow(pair_files[idx][0],pair_files[idx][1])

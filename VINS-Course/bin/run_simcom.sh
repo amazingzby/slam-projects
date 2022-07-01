@@ -1,1 +1,1 @@
-../bin/run_euroc /home/zby/work/project/slam/simcom/dataset/20220225_143810/mav0/ ../config_simcom/
+../bin/run_euroc /home/zby/data/oak-d/stereo_image/data/calibration_img_imu/ ../config_oak/

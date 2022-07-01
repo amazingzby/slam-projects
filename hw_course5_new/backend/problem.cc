@@ -314,7 +314,11 @@ void Problem::MakeHessian() {
             ulong dim_i = v_i->LocalDimension();
 
             //Information 信息矩阵，输出显示为2*2的单位矩阵
+            //jacobian_i有两种形状，分别为2*1和2*6
+            //std::cout<<"print information matrix"<<std::endl;
             //std::cout<<edge.second->Information() <<std::endl;
+            //cout<< "print jacobian_i size"<<std::endl;
+            //cout<< jacobian_i.rows()<<" "<<jacobian_i.cols()<<std::endl;
             MatXX JtW = jacobian_i.transpose() * edge.second->Information();
             for (size_t j = i; j < verticies.size(); ++j) {
                 auto v_j = verticies[j];
@@ -333,8 +337,9 @@ void Problem::MakeHessian() {
                 H.block(index_i, index_j, dim_i, dim_j).noalias() += hessian;
                 if (j != i) {
                     // 对称的下三角
-		    // TODO:: home work. 完成 H index 的填写.
+		            // TODO:: home work. 完成 H index 的填写.
                     // H.block(?,?, ?, ?).noalias() += hessian.transpose();
+                    // noalias用法 https://blog.csdn.net/qq_36170626/article/details/104019276
                     H.block(index_j, index_i, dim_j, dim_i).noalias() += hessian.transpose();
                 }
             }

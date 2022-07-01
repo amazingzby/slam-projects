@@ -1,0 +1,31 @@
+Calibration results 
+====================
+Camera-system parameters:
+	cam0 (/camera/image_1):
+	 type: <class 'aslam_cv.libaslam_cv_python.DistortedPinholeCameraGeometry'>
+	 distortion: [ 0.12907808 -0.45600923  0.00315421 -0.00344017] +- [0.01190934 0.0387067  0.00098361 0.00091952]
+	 projection: [771.58560457 771.69159245 646.73869066 318.51768531] +- [0.73692011 0.67322921 1.10222121 0.84872849]
+	 reprojection error: [0.000056, -0.000092] +- [0.124079, 0.125639]
+
+	cam1 (/camera/image_2):
+	 type: <class 'aslam_cv.libaslam_cv_python.DistortedPinholeCameraGeometry'>
+	 distortion: [ 0.06734598 -0.21194852  0.00514655 -0.00034977] +- [0.00999125 0.02071393 0.00088276 0.00103886]
+	 projection: [777.63110415 778.50128831 626.67668037 324.61218841] +- [0.66351708 0.70251661 0.93410149 0.89259426]
+	 reprojection error: [0.000018, -0.000096] +- [0.148415, 0.126516]
+
+	baseline T_1_0:
+	 q: [ 0.01073663  0.00587404 -0.00073972  0.99992483] +- [0.00216826 0.00264248 0.00024743]
+	 t: [-0.07501164  0.00104704  0.0023254 ] +- [0.00030835 0.00034403 0.00140238]
+
+
+
+Target configuration
+====================
+
+  Type: checkerboard
+  Rows
+    Count: 7
+    Distance: 0.0287 [m]
+  Cols
+    Count: 6
+    Distance: 0.0287 [m]

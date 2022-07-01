@@ -18,14 +18,16 @@ using namespace cv;
 using namespace Eigen;
 
 const int nDelayTimes = 2;
-string sData_path = "/home/dataset/EuRoC/MH-05/mav0/";
-string sConfig_path = "../config/";
+//string sData_path = "/home/dataset/EuRoC/MH-05/mav0/";
+//string sConfig_path = "../config/";
+string	sData_path = "/home/zby/data/oak-d/stereo_image/data/llvisionData/mav0/";
+string	sConfig_path = "/home/zby/work/project/slam/slam-projects/VINS-Course/config_oak/";
 
 std::shared_ptr<System> pSystem;
 
 void PubImuData()
 {
-	string sImu_data_file = sConfig_path + "MH_05_imu0.txt";
+	string sImu_data_file = sConfig_path + "imu.txt";
 	cout << "1 PubImuData start sImu_data_filea: " << sImu_data_file << endl;
 	ifstream fsImu;
 	fsImu.open(sImu_data_file.c_str());
@@ -52,7 +54,7 @@ void PubImuData()
 
 void PubImageData()
 {
-	string sImage_file = sConfig_path + "MH_05_cam0.txt";
+	string sImage_file = sConfig_path + "timestamps.txt";
 
 	cout << "1 PubImageData start sImage_file: " << sImage_file << endl;
 
@@ -71,10 +73,12 @@ void PubImageData()
 	// cv::namedWindow("SOURCE IMAGE", CV_WINDOW_AUTOSIZE);
 	while (std::getline(fsImage, sImage_line) && !sImage_line.empty())
 	{
+	 	//cout<<sImage_line<<endl;
+		//cout<<"Image line test!"<<endl;
 		std::istringstream ssImuData(sImage_line);
 		ssImuData >> dStampNSec >> sImgFileName;
 		// cout << "Image t : " << fixed << dStampNSec << " Name: " << sImgFileName << endl;
-		string imagePath = sData_path + "cam0/data/" + sImgFileName;
+		string imagePath = sData_path + "left/" + sImage_line + ".png";
 
 		Mat img = imread(imagePath.c_str(), 0);
 		if (img.empty())
@@ -95,7 +99,7 @@ void PubImageData()
 #ifdef __APPLE__
 // support for MacOS
 void DrawIMGandGLinMainThrd(){
-	string sImage_file = sConfig_path + "MH_05_cam0.txt";
+	string sImage_file = sConfig_path + "timestamps.txt";
 
 	cout << "1 PubImageData start sImage_file: " << sImage_file << endl;
 
@@ -117,7 +121,7 @@ void DrawIMGandGLinMainThrd(){
 		std::istringstream ssImuData(sImage_line);
 		ssImuData >> dStampNSec >> sImgFileName;
 		// cout << "Image t : " << fixed << dStampNSec << " Name: " << sImgFileName << endl;
-		string imagePath = sData_path + "cam0/data/" + sImgFileName;
+		string imagePath = sData_path + "left/" + sImgFileName;
 
 		Mat img = imread(imagePath.c_str(), 0);
 		if (img.empty())
@@ -154,12 +158,16 @@ int main(int argc, char **argv)
 	if(argc != 3)
 	{
 		//case1
-		sData_path = "/home/zby/data/EuRoC/MH_05_difficult/mav0/";
-		sConfig_path = "/home/zby/work/project/shenlanxueyuan/VIO/VINS-Course/config_org/";
+		//sData_path = "/home/zby/data/EuRoC/MH_05_difficult/mav0/";
+		//sConfig_path = "/home/zby/work/project/shenlanxueyuan/VIO/VINS-Course/config_org/";
 
 		//case2
 		//sData_path = "/home/zby/work/project/slam/simcom/dataset/20220225_143810/mav0/";
 		//sConfig_path = "/home/zby/work/project/shenlanxueyuan/VIO/VINS-Course/config_simcom/";
+
+		//case3
+		sData_path = "/home/zby/data/oak-d/stereo_image/data/llvisionData/mav0/";
+		sConfig_path = "/home/zby/work/project/slam/slam-projects/VINS-Course/config_oak/";
 	}
 	else
 	{
